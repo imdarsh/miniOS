@@ -6,15 +6,21 @@ public class Process
     public int Priority { get; set; }
     public ProcessState State {get; set; }
 
-    public Process(int burstTime)
+    // public Process(int burstTime = 0)
+    // {
+    //     if(burstTime > 0)
+    //     {
+    //         BurstTime = burstTime;
+    //     } else
+    //     {
+    //         throw new InvalidProcessException("BurstTime must be greater than zero.");
+    //     }
+    // }
+    
+    public void PauseProcess(int Id)
     {
-        if(burstTime > 0)
-        {
-            BurstTime = burstTime;
-        } else
-        {
-            throw new InvalidProcessException("BurstTime must be greater than zero.");
-        }
-        
+        Console.WriteLine($"Process {Id} Paused!");
     }
 }
+
+public delegate void ProcessAction(int Id);
