@@ -1,4 +1,7 @@
-﻿class Program
+﻿using miniOS.Delegates;
+using miniOS.Services;
+
+class Program
 {
     public static void Main(string[] args)
     {
@@ -8,10 +11,14 @@
         //     .OrderBy(process => process.Priority).Select(process => process.Name);
         // bool hasBurstTime = processes.Any(process => process.BurstTime > 10);
 
-        Process process = new Process();
+        Process process = new Process(1, "Chrome", 3, 2, ProcessState.Created);
+        Logger logger = new Logger();
+        NotificationService notifications = new NotificationService();
+        
+        process.ProcessCompleted += logger.Log;
+        process.ProcessCompleted += notifications.Show;
 
-        ProcessAction action = process.PauseProcess;
-
-        action(1);
+        process.TerminateProcess();
+        process.TerminateProcess();
     }
 }
