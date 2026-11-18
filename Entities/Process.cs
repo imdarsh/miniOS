@@ -32,7 +32,28 @@ public class Process
         if(State != ProcessState.Terminated)
         {
             State = ProcessState.Terminated;
-            ProcessCompleted?.Invoke(this, new ProcessCompletedEventArgs(Id, Name, DateTime.Now));
+            NotifyProcessCompleted(new ProcessCompletedEventArgs(Id, Name, DateTime.Now));
+        }
+    }
+
+    public void BrokenLogger(object? sender, ProcessCompletedEventArgs e)
+    {
+        throw new Exception("Logger crashed!");
+    }
+
+    private void NotifyProcessCompleted(ProcessCompletedEventArgs eventArgs)
+    {
+        Delegate[] handlers = ProcessCompleted?.GetInvocationList() ?? Array.Empty<Delegate>();
+        foreach(var handler in handlers)
+        {
+            try
+            {
+                var callBack = (EventHandler<ProcessCompletedEventArgs>)handler;
+                callBack(this, eventArgs);
+            } catch(Exception e)
+            {
+                Console.WriteLine($"Subscriber failed: {e.Message}");
+            }
         }
     }
 
