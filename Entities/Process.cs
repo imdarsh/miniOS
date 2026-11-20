@@ -5,6 +5,7 @@ public class Process
     public int BurstTime { get; private set; }
     public int Priority { get; set; }
     public ProcessState State {get; private set; }
+    private readonly object _lock = new object();
 
     public Process(int id, string name, int burstTime = 0, int priority = 1, ProcessState state = ProcessState.Created)
     {
@@ -22,6 +23,32 @@ public class Process
     }
 
     // Method
+    public async Task ExecuteProcessAsync()
+    {
+ 
+        lock (_lock)
+        {
+            if(State == ProcessState.Created)
+            {
+                State = ProcessState.Running;
+            } else
+            {
+                throw new InvalidOperationException("Process cannot be executed in its current state.");
+            }
+        } 
+         try
+        {
+            await Task.Delay(BurstTime * 1000);
+        } catch
+        {
+            lock (_lock)
+            {                
+                State = ProcessState.Failed;
+            }
+            throw;
+        }
+        TerminateProcess();
+    }
     public void PauseProcess(int id)
     {
         Console.WriteLine($"Process {id} Paused!");
