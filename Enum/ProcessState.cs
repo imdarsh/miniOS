@@ -4,5 +4,6 @@ public enum ProcessState{
     Running,
     Waiting,
     Terminated,
-    Failed
+    Failed,
+    Cancelled
 }

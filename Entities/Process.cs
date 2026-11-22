@@ -23,7 +23,7 @@ public class Process
     }
 
     // Method
-    public async Task ExecuteProcessAsync()
+    public async Task ExecuteProcessAsync(CancellationToken token)
     {
  
         lock (_lock)
@@ -38,8 +38,18 @@ public class Process
         } 
          try
         {
-            await Task.Delay(BurstTime * 1000);
-        } catch
+            await Task.Delay(BurstTime * 1000, token);
+        }
+        catch(OperationCanceledException)
+        {
+            lock(_lock)
+            {
+                State = ProcessState.Cancelled;
+            }
+            NotifyProcessCanceled(new ProcessCanceledEventArgs(Id, Name, DateTime.Now));
+            throw;
+        } 
+        catch
         {
             lock (_lock)
             {                
@@ -56,9 +66,17 @@ public class Process
 
     public void TerminateProcess()
     {
-        if(State != ProcessState.Terminated)
+        bool shouldNotify = false;
+        lock (_lock)
         {
-            State = ProcessState.Terminated;
+            if(State == ProcessState.Running)
+            {         
+                State = ProcessState.Terminated;
+                shouldNotify = true;
+            }
+        }
+        if(shouldNotify)
+        { 
             NotifyProcessCompleted(new ProcessCompletedEventArgs(Id, Name, DateTime.Now));
         }
     }
@@ -84,6 +102,24 @@ public class Process
         }
     }
 
+    private void NotifyProcessCanceled(ProcessCanceledEventArgs eventArgs)
+    {
+        Delegate[] handlers = ProcessCanceled?.GetInvocationList() ?? Array.Empty<Delegate>();
+        foreach(var handler in handlers)
+        {
+            try
+            {
+                var callBack = (EventHandler<ProcessCanceledEventArgs>)handler;
+                callBack(this, eventArgs);
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine($"Subscriber failed: {e.Message}");
+            }
+        }
+    }
+
     // Events
     public event EventHandler<ProcessCompletedEventArgs>? ProcessCompleted;
+    public event EventHandler<ProcessCanceledEventArgs>? ProcessCanceled;
 }
